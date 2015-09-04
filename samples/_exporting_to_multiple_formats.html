@@ -4,6 +4,7 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>amStock Example</title>
 		<link rel="stylesheet" href="../amcharts/style.css" type="text/css">
+		<link rel="stylesheet" href="style.css" type="text/css">
 
 		<script src="../amcharts/amcharts.js" type="text/javascript"></script>
 		<script src="../amcharts/serial.js" type="text/javascript"></script>
@@ -13,10 +14,8 @@
 		<!-- Note, the exporting will work only if you view the file from web server -->
 		<!-- Exporting to image works on all modern browsers except IE9 (IE10 works fine) -->
 		<!--[if (!IE) | (gte IE 10)]> -->
-        <script src="../amcharts/exporting/amexport.js" type="text/javascript"></script>
-        <script src="../amcharts/exporting/rgbcolor.js" type="text/javascript"></script>
-        <script src="../amcharts/exporting/canvg.js" type="text/javascript"></script>
-        <script src="../amcharts/exporting/filesaver.js" type="text/javascript"></script>
+        <script type="text/javascript" src="../amcharts/plugins/export/export.js"></script>
+        <link  type="text/css" href="../amcharts/plugins/export/export.css" rel="stylesheet">
 		<!-- <![endif]-->
 		<script type="text/javascript">
 
@@ -150,17 +149,28 @@
 					creditsPosition: "bottom-right"
 				},
 
-				amExport: {
-					top: 25,
-					right: 0
+
+				"export": {
+					"enabled": true,
+					"libs": {
+						"path": "../amcharts/plugins/export/libs/"
+					},
+					// override some of the defaults (Stock Chart specific)
+					"periodSelector": {
+						"position": "left"
+					},
+					"dataSetSelector": {
+						"position": "left"
+					}
 				}
 			});
 
 		</script>
 	</head>
 	<body style="background-color:#FFFFFF">
-		<span style="font-family: Arial; font-size: 10; color: #CC0000;">
-			<p>Warning! Exporting to image works only if you view this file from web server. Exporting works with all modern browsers except IE9 (works fine with IE10)</p>
+		<span style="font-size: 10; color: #CC0000;">
+			<p>Warning! Exporting to image works only if you view this file from web server. Exporting works with all modern browsers except IE9 (works fine with IE10).</p>
+            <p>Since version 3.14 chart export is done using dedicated plugin, located in amCharts/plugins/export folder. Please refer to bundled examples and README.md file for more information.</p>
 		</span>
 		<div id="chartdiv" style="width:100%; height:600px;"></div>
 	</body>
