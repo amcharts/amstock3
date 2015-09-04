@@ -63,6 +63,11 @@
 							title: "Value",
 							percentHeight: 70,
 
+							valueAxes:[{
+									id:"v1"
+								}
+							],
+
 							stockGraphs: [{
 								id: "g1",
 								valueField: "value",
@@ -71,16 +76,18 @@
 								bullet: "round"
 							}],
 
-
 							stockLegend: {
 								valueTextRegular: " ",
 								markerType: "none"
 							}
 						},
 
+
+
 						{
 							title: "Volume",
 							percentHeight: 30,
+
 							stockGraphs: [{
 								valueField: "volume",
 								type: "column",
@@ -102,7 +109,9 @@
 					},
 
 					chartCursorSettings: {
-						valueBalloonsEnabled: true
+						valueBalloonsEnabled: true,
+						valueLineBalloonEnabled:true,
+						valueLineEnabled:true
 					},
 
 					periodSelector: {

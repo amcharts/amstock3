@@ -4,27 +4,27 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>amStock Example</title>
 		<link rel="stylesheet" href="../amcharts/style.css"	type="text/css">
-		
+
 		<script src="../amcharts/amcharts.js" type="text/javascript"></script>
 		<script src="../amcharts/serial.js" type="text/javascript"></script>
 		<script src="../amcharts/amstock.js" type="text/javascript"></script>
-		
+
 		<script type="text/javascript">
 			var chartData = [];
 			generateChartData();
-			
+
 			function generateChartData() {
 				var firstDate = new Date(2012, 0, 1);
 				firstDate.setDate(firstDate.getDate() - 500);
 				firstDate.setHours(0, 0, 0, 0);
-			
+
 				for (var i = 0; i < 500; i++) {
 					var newDate = new Date(firstDate);
 					newDate.setDate(newDate.getDate() + i);
-			
+
 					var a = Math.round(Math.random() * (40 + i)) + 100 + i;
 					var b = Math.round(Math.random() * 100000000);
-			
+
 					chartData.push({
 						date: newDate,
 						value: a,
@@ -32,7 +32,7 @@
 					});
 				}
 			}
-			
+
 			AmCharts.makeChart("chartdiv", {
 				type: "stock",
 				pathToImages: "../amcharts/images/",
@@ -124,32 +124,34 @@
 						description: "This is description of an event"
 					}]
 				}],
-			
-			
+
+
 				panels: [{
 					title: "Value",
 					percentHeight: 70,
-			
+
 					stockGraphs: [{
 						id: "g1",
 						valueField: "value"
 					}],
-			
+
 					stockLegend: {
 						valueTextRegular: " ",
 						markerType: "none"
 					}
 				}],
-			
+
 				chartScrollbarSettings: {
 					graph: "g1"
 				},
-			
+
 				chartCursorSettings: {
 					valueBalloonsEnabled: true,
-					graphBulletSize: 1
+					graphBulletSize: 1,
+					valueLineEnabled:true,
+					valueLineBalloonEnabled:true
 				},
-			
+
 				periodSelector: {
 					periods: [{
 						period: "DD",
@@ -171,11 +173,11 @@
 						label: "MAX"
 					}]
 				},
-			
+
 				panelsSettings: {
 					usePrefixes: true
-				}			
-			});	
+				}
+			});
 		</script>
 	</head>
 	<body style="background-color:#FFFFFF">

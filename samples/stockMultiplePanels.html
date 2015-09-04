@@ -140,6 +140,10 @@
 				stockLegend.periodValueTextComparing = "[[percents.value.close]]%";
 				stockPanel.stockLegend = stockLegend;
 
+				var chartCursor = new AmCharts.ChartCursor();
+				chartCursor.valueLineEnabled = true;
+				chartCursor.valueLineAxis = valueAxis;
+				stockPanel.chartCursor = chartCursor;
 
 				var stockPanel2 = new AmCharts.StockPanel();
 				stockPanel2.title = "Volume";
@@ -166,6 +170,11 @@
 				legend2.labelText = "";
 				legend2.periodValueTextRegular = "[[value.close]]";
 				stockPanel2.stockLegend = legend2;
+
+				var chartCursor2 = new AmCharts.ChartCursor();
+				chartCursor2.valueLineEnabled = true;
+				chartCursor2.valueLineAxis = valueAxis2;
+				stockPanel2.chartCursor = chartCursor2;
 
 				chart.panels = [stockPanel, stockPanel2];
 
