@@ -44,6 +44,11 @@
    border-width:1px;
 }
 
+.amChartsCompareList div
+{
+   -webkit-box-sizing: initial;
+   box-sizing: initial;
+}
 
 .amChartsInputField
 {
