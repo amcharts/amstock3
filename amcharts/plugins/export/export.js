@@ -2,7 +2,7 @@
 Plugin Name: amCharts Export
 Description: Adds export capabilities to amCharts products
 Author: Benjamin Maertz, amCharts
-Version: 1.0
+Version: 1.0.4
 Author URI: http://www.amcharts.com/
 
 Copyright 2015 amCharts
@@ -26,15 +26,15 @@ not apply to any other amCharts products that are covered by different licenses.
 AmCharts.addInitHandler( function( chart ) {
 	var _this = {
 		name: "export",
-		version: "1.0",
+		version: "1.0.4",
 		libs: {
 			autoLoad: true,
+			reload: false,
 			path: "./plugins/export/libs/",
 			resources: [ {
 				"pdfmake/pdfmake.js": [ "pdfmake/vfs_fonts.js" ],
 				"jszip/jszip.js": [ "xlsx/xlsx.js" ]
-			}, "fabric.js/fabric.js", "FileSaver.js/FileSaver.js" ],
-			loaded: 0
+			}, "fabric.js/fabric.js", "FileSaver.js/FileSaver.js" ]
 		},
 		config: {},
 		setup: {},
@@ -59,13 +59,14 @@ AmCharts.addInitHandler( function( chart ) {
 					_this.drawing.undos.push( last );
 				}
 			},
-			done: function() {
+			done: function(print) {
 				_this.drawing.enabled = false;
 				_this.drawing.undos = [];
 				_this.drawing.redos = [];
-				_this.setup.fabric.renderAll();
-				_this.setup.wrapper.setAttribute( "class", "amcharts-export-canvas" );
 				_this.createMenu( _this.config.menu );
+				setTimeout(function() {
+					_this.setup.wrapper.setAttribute( "class", _this.setup.chart.classNamePrefix + "-export-canvas" );
+				},print?100:0);
 			}
 		},
 		defaults: {
@@ -211,13 +212,13 @@ AmCharts.addInitHandler( function( chart ) {
 		},
 
 		loadResource: function( src, addons ) {
-			var node, url = src.indexOf( "//" ) != -1 ? src : [ _this.libs.path, src ].join( "" );
+			var i1, exist, node, item, check, type;
+			var url = src.indexOf( "//" ) != -1 ? src : [ _this.libs.path, src ].join( "" );
 
 			function callback() {
-				_this.libs.loaded++;
 				if ( addons ) {
-					for ( i in addons ) {
-						_this.loadResource( addons[ i ] );
+					for ( i1 = 0; i1 < addons.length; i1++ ) {
+						_this.loadResource( addons[ i1 ] );
 					}
 				}
 			}
@@ -234,24 +235,37 @@ AmCharts.addInitHandler( function( chart ) {
 				node.setAttribute( "href", url );
 			}
 
-			if ( node ) {
+			for ( i1 = 0; i1 < document.head.childNodes.length; i1++ ) {
+				item = document.head.childNodes[ i1 ];
+				check = item ? ( item.src || item.href ) : false;
+				type = item ? item.tagName : false;
+
+				if ( item && check && check.indexOf( src ) != -1 ) {
+					if ( _this.libs.reload ) {
+						document.head.removeChild( item );
+					}
+					exist = true;
+					break;
+				}
+			}
+
+			if ( !exist || _this.libs.reload ) {
 				node.addEventListener( "load", callback );
 				document.head.appendChild( node );
-			} else {
-				callback();
 			}
+
 		},
 
 		loadDependencies: function() {
-			if ( !_this.libs.loaded && _this.libs.autoLoad ) {
-				for ( i in _this.libs.resources ) {
-					if ( typeof _this.libs.resources[ i ] == "object" ) {
-						for ( i2 in _this.libs.resources[ i ] ) {
-							var addons = _this.libs.resources[ i ][ i2 ];
-							_this.loadResource( i2, addons );
+			var i1, i2;
+			if ( _this.libs.autoLoad ) {
+				for ( i1 = 0; i1 < _this.libs.resources.length; i1++ ) {
+					if ( _this.libs.resources[ i1 ] instanceof Object ) {
+						for ( i2 in _this.libs.resources[ i1 ] ) {
+							_this.loadResource( i2, _this.libs.resources[ i1 ][ i2 ] );
 						}
 					} else {
-						_this.loadResource( _this.libs.resources[ i ] );
+						_this.loadResource( _this.libs.resources[ i1 ] );
 					}
 				}
 			}
@@ -262,33 +276,40 @@ AmCharts.addInitHandler( function( chart ) {
 		},
 
 		deepMerge: function( a, b, overwrite ) {
-			for ( i in b ) {
-				var v = b[ i ];
+			var i1, v, type = b instanceof Array ? "array" : "object";
+
+			for ( i1 in b ) {
+				// PREVENT METHODS
+				if ( type == "array" && isNaN(i1) ) {
+					continue;
+				}
+
+				v = b[ i1 ];
 
 				// NEW
-				if ( a[ i ] == undefined || overwrite ) {
+				if ( a[ i1 ] == undefined || overwrite ) {
 					if ( v instanceof Array ) {
-						a[ i ] = new Array();
+						a[ i1 ] = new Array();
 					} else if ( v instanceof Function ) {
-						a[ i ] = new Function();
+						a[ i1 ] = new Function();
 					} else if ( v instanceof Date ) {
-						a[ i ] = new Date();
+						a[ i1 ] = new Date();
 					} else if ( v instanceof Object ) {
-						a[ i ] = new Object();
+						a[ i1 ] = new Object();
 					} else if ( v instanceof Number ) {
-						a[ i ] = new Number();
+						a[ i1 ] = new Number();
 					} else if ( v instanceof String ) {
-						a[ i ] = new String();
+						a[ i1 ] = new String();
 					}
 				}
 
 				if ( !( v instanceof Function || v instanceof Date ) && ( v instanceof Object || v instanceof Array ) ) {
-					_this.deepMerge( a[ i ], v, overwrite );
+					_this.deepMerge( a[ i1 ], v, overwrite );
 				} else {
 					if ( a instanceof Array && !overwrite ) {
 						a.push( v );
 					} else {
-						a[ i ] = v;
+						a[ i1 ] = v;
 					}
 				}
 			}
@@ -297,8 +318,8 @@ AmCharts.addInitHandler( function( chart ) {
 
 		// CAPTURE EMOTIONAL MOMENT
 		capture: function( options, callback ) {
+			var i1, i2, i3;
 			var cfg = _this.deepMerge( _this.deepMerge( {}, _this.config.fabric ), options || {} );
-			var i1, i2, i3 = 0;
 			var groups = [];
 			var offset = {
 				x: 0,
@@ -425,7 +446,7 @@ AmCharts.addInitHandler( function( chart ) {
 
 			if ( !_this.setup.wrapper ) {
 				_this.setup.wrapper = document.createElement( "div" );
-				_this.setup.wrapper.setAttribute( "class", "amcharts-export-canvas" );
+				_this.setup.wrapper.setAttribute( "class", _this.setup.chart.classNamePrefix + "-export-canvas" );
 				_this.setup.wrapper.appendChild( _this.setup.canvas );
 			} else {
 				_this.setup.wrapper.innerHTML = "";
@@ -447,9 +468,9 @@ AmCharts.addInitHandler( function( chart ) {
 
 			// DRAWING
 			if ( _this.drawing.enabled ) {
-				_this.setup.wrapper.setAttribute( "class", "amcharts-export-canvas active" );
+				_this.setup.wrapper.setAttribute( "class", _this.setup.chart.classNamePrefix + "-export-canvas active" );
 			} else {
-				_this.setup.wrapper.setAttribute( "class", "amcharts-export-canvas" );
+				_this.setup.wrapper.setAttribute( "class", _this.setup.chart.classNamePrefix + "-export-canvas" );
 			}
 
 			for ( i1 = 0; i1 < groups.length; i1++ ) {
@@ -489,20 +510,27 @@ AmCharts.addInitHandler( function( chart ) {
 				// ADD TO CANVAS
 				fabric.parseSVGDocument( group.svg, ( function( group ) {
 					return function( objects, options ) {
+						var i1;
 						var g = fabric.util.groupSVGElements( objects, options );
 						var tmp = {
 							top: group.offset.y,
 							left: group.offset.x
 						};
 
-						for ( i1 in g.paths ) {
+						for ( i1 = 0; i1 < g.paths.length; i1++ ) {
 
 							// OPACITY; TODO: Distinguish opacity types
 							if ( g.paths[ i1 ] ) {
 
 								// CHECK ORIGIN; REMOVE TAINTED
-								if ( cfg.removeImages && g.paths[ i1 ][ "xlink:href" ] && g.paths[ i1 ][ "xlink:href" ].indexOf( location.origin ) == -1 ) {
+								if (
+									cfg.removeImages &&
+									g.paths[ i1 ][ "xlink:href" ] &&
+									g.paths[ i1 ][ "xlink:href" ].indexOf("//") != -1 &&
+									g.paths[ i1 ][ "xlink:href" ].indexOf( location.origin ) == -1
+								) {
 									g.paths.splice( i1, 1 );
+									continue;
 								}
 
 								// SET OPACITY
@@ -559,12 +587,12 @@ AmCharts.addInitHandler( function( chart ) {
 						_this.setup.fabric.add( g );
 
 						// ADD BALLOONS
-						var balloons = group.svg.parentNode.getElementsByClassName( "amcharts-balloon-div" );
-						for ( i = 0; i < balloons.length; i++ ) {
+						var balloons = group.svg.parentNode.getElementsByClassName( _this.setup.chart.classNamePrefix + "-balloon-div" );
+						for ( i1 = 0; i1 < balloons.length; i1++ ) {
 							if ( cfg.balloonFunction instanceof Function ) {
-								cfg.balloonFunction.apply( _this, [ balloons[ i ], group ] );
+								cfg.balloonFunction.apply( _this, [ balloons[ i1 ], group ] );
 							} else {
-								var parent = balloons[ i ];
+								var parent = balloons[ i1 ];
 								var text = parent.childNodes[ 0 ];
 								var label = new fabric.Text( text.innerText || text.innerHTML, {
 									fontSize: _this.pxToNumber( text.style.fontSize ),
@@ -597,6 +625,7 @@ AmCharts.addInitHandler( function( chart ) {
 
 					// Identify elements through classnames
 				} )( group ), function( svg, obj ) {
+					var i1;
 					var className = svg.getAttribute( "class" ) || svg.parentNode.getAttribute( "class" ) || "";
 					var visibility = svg.getAttribute( "visibility" ) || svg.parentNode.getAttribute( "visibility" ) || svg.parentNode.parentNode.getAttribute( "visibility" ) || "";
 					var clipPath = svg.getAttribute( "clip-path" ) || svg.parentNode.getAttribute( "clip-path" ) || "";
@@ -614,14 +643,14 @@ AmCharts.addInitHandler( function( chart ) {
 
 						// TRANSPORT FILL/STROKE OPACITY
 						var attrs = [ "fill", "stroke" ];
-						for ( i1 in attrs ) {
+						for ( i1 = 0; i1 < attrs.length; i1++ ) {
 							var attr = attrs[ i1 ]
 							var attrVal = String( svg.getAttribute( attr ) || "" );
 							var attrOpacity = Number( svg.getAttribute( attr + "-opacity" ) || "1" );
 							var attrRGBA = fabric.Color.fromHex( attrVal ).getSource();
 
 							// EXCEPTION
-							if ( obj.className == "amcharts-guide-fill" && !attrVal ) {
+							if ( obj.className == _this.setup.chart.classNamePrefix + "-guide-fill" && !attrVal ) {
 								attrOpacity = 0;
 								attrRGBA = fabric.Color.fromHex( "#000000" ).getSource();
 							}
@@ -721,7 +750,6 @@ AmCharts.addInitHandler( function( chart ) {
 				multiplier: 2
 			}, _this.config.pdfMake ), options || {}, true );
 			cfg.images.reference = _this.toPNG( cfg );
-
 			var data = new pdfMake.createPdf( cfg );
 
 			if ( callback ) {
@@ -736,6 +764,7 @@ AmCharts.addInitHandler( function( chart ) {
 		},
 
 		toPRINT: function( options, callback ) {
+			var i1;
 			var cfg = _this.deepMerge( {
 				// nothing in here
 			}, options || {} );
@@ -747,22 +776,22 @@ AmCharts.addInitHandler( function( chart ) {
 			img.src = data;
 			img.setAttribute( "style", "width: 100%; max-height: 100%;" );
 
-			for ( i in items ) {
-				if ( items[ i ].nodeType === 1 ) {
-					states[ i ] = items[ i ].style.display;
-					items[ i ].style.display = "none";
+			for ( i1 = 0; i1 < items.length; i1++ ) {
+				if ( items[ i1 ].nodeType === 1 ) {
+					states[ i1 ] = items[ i1 ].style.display;
+					items[ i1 ].style.display = "none";
 				}
 			}
 
 			document.body.appendChild( img );
 			window.print();
 
-			for ( i in items ) {
-				if ( items[ i ].nodeType === 1 ) {
-					items[ i ].style.display = states[ i ];
+			for ( i1 = 0; i1 < items.length; i1++ ) {
+				if ( items[ i1 ].nodeType === 1 ) {
+					items[ i1 ].style.display = states[ i1 ];
 				}
 			}
-			img.remove();
+			document.body.removeChild( img );
 
 			_this.handleCallback( callback, data );
 
@@ -781,6 +810,7 @@ AmCharts.addInitHandler( function( chart ) {
 		},
 
 		toCSV: function( options, callback ) {
+			var row, col;
 			var cfg = _this.deepMerge( {
 				data: _this.getChartData(),
 				delimiter: ",",
@@ -797,35 +827,37 @@ AmCharts.addInitHandler( function( chart ) {
 
 			for ( row in cfg.data ) {
 				var buffer = [];
-				for ( col in cfg.data[ row ] ) {
-					var value = cfg.data[ row ][ col ];
+				if ( !isNaN(row) ) {
+					for ( col in cfg.data[ row ] ) {
+						var value = cfg.data[ row ][ col ];
 
-					// HEADER
-					if ( row == 0 ) {
-						value = col;
+						// HEADER
+						if ( row == 0 ) {
+							value = col;
 
-						// BODY
-					} else {
+							// BODY
+						} else {
+							if ( typeof value === "string" ) {
+								value = value;
+							} else if ( cfg.dateFormat && value instanceof Date && cfg.dateFields.indexOf( col ) != -1 ) {
+								value = AmCharts.formatDate( value, cfg.dateFormat );
+							}
+						}
+
+						// WRAP IN QUOTES
 						if ( typeof value === "string" ) {
-							value = value;
-						} else if ( cfg.dateFormat && value instanceof Date && cfg.dateFields.indexOf( col ) != -1 ) {
-							value = AmCharts.formatDate( value, cfg.dateFormat );
+							if ( cfg.escape ) {
+								value = value.replace( '"', '""' );
+							}
+							if ( cfg.quotes ) {
+								value = [ '"', value, '"' ].join( "" );
+							}
 						}
-					}
 
-					// WRAP IN QUOTES
-					if ( typeof value === "string" ) {
-						if ( cfg.escape ) {
-							value = value.replace( '"', '""' );
-						}
-						if ( cfg.quotes ) {
-							value = [ '"', value, '"' ].join( "" );
-						}
+						buffer.push( value );
 					}
-
-					buffer.push( value );
+					data += buffer.join( cfg.delimiter ) + "\n";
 				}
-				data += buffer.join( cfg.delimiter ) + "\n";
 			}
 
 			_this.handleCallback( callback, data );
@@ -910,6 +942,7 @@ AmCharts.addInitHandler( function( chart ) {
 		},
 
 		toArray: function( options, callback ) {
+			var row, col;
 			var cfg = _this.deepMerge( {
 				data: _this.getChartData(),
 				dateFields: [],
@@ -934,19 +967,21 @@ AmCharts.addInitHandler( function( chart ) {
 			// BODY
 			for ( row in cfg.data ) {
 				var buffer = [];
-				for ( col in cols ) {
-					var col = cols[ col ];
-					var value = cfg.data[ row ][ col ] || "";
+				if ( !isNaN(row) ) {
+					for ( col in cols ) {
+						var col = cols[ col ];
+						var value = cfg.data[ row ][ col ] || "";
 
-					if ( cfg.dateFormat && value instanceof Date && cfg.dateFields.indexOf( col ) != -1 ) {
-						value = AmCharts.formatDate( value, cfg.dateFormat );
-					} else {
-						value = String( value )
+						if ( cfg.dateFormat && value instanceof Date && cfg.dateFields.indexOf( col ) != -1 ) {
+							value = AmCharts.formatDate( value, cfg.dateFormat );
+						} else {
+							value = String( value )
+						}
+
+						buffer.push( value );
 					}
-
-					buffer.push( value );
+					data.push( buffer );
 				}
-				data.push( buffer );
 			}
 
 			_this.handleCallback( callback, data );
@@ -1068,11 +1103,11 @@ AmCharts.addInitHandler( function( chart ) {
 		// MENU BUILDER
 		createMenu: function( list ) {
 			function buildList( list, container ) {
-				var ul = document.createElement( "ul" );
-				for ( i in list ) {
-					var item = typeof list[ i ] === "string" ? {
-						format: list[ i ]
-					} : list[ i ];
+				var i1, ul = document.createElement( "ul" );
+				for ( i1 = 0; i1 < list.length; i1++ ) {
+					var item = typeof list[ i1 ] === "string" ? {
+						format: list[ i1 ]
+					} : list[ i1 ];
 					var li = document.createElement( "li" );
 					var a = document.createElement( "a" );
 					var img = document.createElement( "img" );
@@ -1121,7 +1156,7 @@ AmCharts.addInitHandler( function( chart ) {
 										if ( item.action != "print" && item.format != "PRINT" ) {
 											this.download( data, item.mimeType, [ item.fileName, item.extension ].join( "." ) );
 										}
-										this.drawing.done();
+										this.drawing.done(item.action == "print" || item.format == "PRINT");
 									} );
 								}
 							} )( item );
@@ -1210,15 +1245,15 @@ AmCharts.addInitHandler( function( chart ) {
 				return container.appendChild( ul );
 			}
 
-			var div = _this.setup.chart.containerDiv.getElementsByClassName( "amcharts-export-menu" );
+			var div = _this.setup.chart.containerDiv.getElementsByClassName( "amExportButton" );
 			if ( div.length ) {
 				div = div[ 0 ];
 				div.innerHTML = "";
 			} else {
 				var div = document.createElement( "div" );
-				div.setAttribute( "class", "amExportButton amcharts-export-menu amcharts-export-menu-" + _this.config.position );
 				_this.setup.menu = div;
 			}
+			div.setAttribute( "class", "amExportButton " + _this.setup.chart.classNamePrefix + "-export-menu " + _this.setup.chart.classNamePrefix + "-export-menu-" + _this.config.position );
 
 			// CALLBACK; REPLACES THE MENU WALKER
 			if ( _this.config.menuWalker ) {
@@ -1239,9 +1274,12 @@ AmCharts.addInitHandler( function( chart ) {
 					libs: {
 						autoLoad: false
 					}
-				}, _this.defaults );
+				}, _this.deepMerge( _this.defaults, {
+					menu: []
+				}, true ) );
 
 				function crawler( object ) {
+					var key;
 					for ( key in object ) {
 						var value = object[ key ];
 
@@ -1266,7 +1304,7 @@ AmCharts.addInitHandler( function( chart ) {
 		init: function( chart ) {
 			_this.setup.canvas = document.createElement( "canvas" );
 			_this.setup.wrapper = document.createElement( "div" );
-			_this.setup.wrapper.setAttribute( "class", "amcharts-export-canvas" );
+			_this.setup.wrapper.setAttribute( "class", _this.setup.chart.classNamePrefix + "-export-canvas" );
 			_this.setup.wrapper.appendChild( _this.setup.canvas );
 			_this.setup.chart.containerDiv.appendChild( _this.setup.wrapper );
 
@@ -1311,7 +1349,7 @@ AmCharts.addInitHandler( function( chart ) {
 	}
 
 	// LOAD DEPENDENCIES
-	_this.loadDependencies();
+	_this.loadDependencies( _this.libs.resources, _this.libs.reload );
 
 	// WAIT FOR CONTAINER
 	_this.timer = setInterval( function() {

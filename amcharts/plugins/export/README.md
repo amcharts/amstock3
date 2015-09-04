@@ -1,6 +1,6 @@
 # amCharts Export
 
-Version: 1.0
+Version: 1.0.4
 
 
 ## Description
@@ -97,8 +97,11 @@ displaying your chart on, not the export.js library.
 
 ### 2) Manual
 
-You can also load all those JavaScript libraries by `<script>` tags. Here is a 
-full list of the files that need to be loaded for each operation:
+You can also load all those JavaScript libraries by `<script>` tags. Since 
+loading of libraries is on by default you will need to turn it off by setting 
+`"libs": { "autoLoad": false }`
+
+Here is a full list of the files that need to be loaded for each operation:
 
 File | Located in | Required for
 ---- | ---------- | ------------
@@ -118,6 +121,7 @@ Property | Default | Description
 backgroundColor | #FFFFFF | RGB code of the color for the background of the exported image
 enabled | true | Enables or disables export functionality
 legend | {} | Places the legend in case it is within an external container
+libs | | 3rd party required library settings (see the above section)
 menu | [] | A list of menu or submenu items (see the next chapter for details)
 fabric | {} | Overwrites the default drawing settings (Frabric library)
 pdfMake | {} | Overwrites the default settings for PDF export (pdfMake library)
@@ -508,6 +512,21 @@ http://www.apache.org/licenses/LICENSE-2.0
 
 
 ## Changelog
+
+### 1.0.4
+* Considering classNamePrefix (dont't forget to adapt export.css)
+* Added: safety delay on print restore to ensure capturing the canvas
+
+### 1.0.3
+* Fix: flagged relative image paths as tainted
+
+### 1.0.2
+* Fix: compabitily on array method extension such as PrototypeJS
+
+### 1.0.1
+* Added: libs.reload: false, script tag crawling to avoid multiple insertions
+* Fix: IE10 bug on print
+* Fix: migration bug, replaces menu instead of appending
 
 ### 1.0
 * Initial release
