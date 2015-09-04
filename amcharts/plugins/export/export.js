@@ -2,7 +2,7 @@
 Plugin Name: amCharts Export
 Description: Adds export capabilities to amCharts products
 Author: Benjamin Maertz, amCharts
-Version: 1.0.4
+Version: 1.0.6
 Author URI: http://www.amcharts.com/
 
 Copyright 2015 amCharts
@@ -26,11 +26,12 @@ not apply to any other amCharts products that are covered by different licenses.
 AmCharts.addInitHandler( function( chart ) {
 	var _this = {
 		name: "export",
-		version: "1.0.4",
+		version: "1.0.6",
 		libs: {
+			async: true,
 			autoLoad: true,
 			reload: false,
-			path: "./plugins/export/libs/",
+			path: ( ( chart.path || "" ) + "plugins/export/libs/" ),
 			resources: [ {
 				"pdfmake/pdfmake.js": [ "pdfmake/vfs_fonts.js" ],
 				"jszip/jszip.js": [ "xlsx/xlsx.js" ]
@@ -59,14 +60,14 @@ AmCharts.addInitHandler( function( chart ) {
 					_this.drawing.undos.push( last );
 				}
 			},
-			done: function(print) {
+			done: function( print ) {
 				_this.drawing.enabled = false;
 				_this.drawing.undos = [];
 				_this.drawing.redos = [];
 				_this.createMenu( _this.config.menu );
-				setTimeout(function() {
+				setTimeout( function() {
 					_this.setup.wrapper.setAttribute( "class", _this.setup.chart.classNamePrefix + "-export-canvas" );
-				},print?100:0);
+				}, print ? 100 : 0 );
 			}
 		},
 		defaults: {
@@ -122,6 +123,9 @@ AmCharts.addInitHandler( function( chart ) {
 					fit: [ 523.28, 769.89 ]
 				} ]
 			},
+			divId: null,
+			menuReviver: null,
+			menuWalker: null,
 			menu: [ {
 				class: "export-main",
 				label: "Export",
@@ -193,7 +197,8 @@ AmCharts.addInitHandler( function( chart ) {
 					format: "PRINT",
 					label: "Print"
 				} ]
-			} ]
+			} ],
+			timer: 0
 		},
 
 		download: function( data, type, filename ) {
@@ -227,6 +232,9 @@ AmCharts.addInitHandler( function( chart ) {
 				node = document.createElement( "script" );
 				node.setAttribute( "type", "text/javascript" );
 				node.setAttribute( "src", url );
+				if ( _this.libs.async ) {
+					node.setAttribute( "async", "" );
+				}
 
 			} else if ( src.indexOf( ".css" ) != -1 ) {
 				node = document.createElement( "link" );
@@ -280,7 +288,7 @@ AmCharts.addInitHandler( function( chart ) {
 
 			for ( i1 in b ) {
 				// PREVENT METHODS
-				if ( type == "array" && isNaN(i1) ) {
+				if ( type == "array" && isNaN( i1 ) ) {
 					continue;
 				}
 
@@ -303,7 +311,7 @@ AmCharts.addInitHandler( function( chart ) {
 					}
 				}
 
-				if ( !( v instanceof Function || v instanceof Date ) && ( v instanceof Object || v instanceof Array ) ) {
+				if ( !( v instanceof Function || v instanceof Date || v instanceof Element ) && ( v instanceof Object || v instanceof Array ) ) {
 					_this.deepMerge( a[ i1 ], v, overwrite );
 				} else {
 					if ( a instanceof Array && !overwrite ) {
@@ -526,7 +534,7 @@ AmCharts.addInitHandler( function( chart ) {
 								if (
 									cfg.removeImages &&
 									g.paths[ i1 ][ "xlink:href" ] &&
-									g.paths[ i1 ][ "xlink:href" ].indexOf("//") != -1 &&
+									g.paths[ i1 ][ "xlink:href" ].indexOf( "//" ) != -1 &&
 									g.paths[ i1 ][ "xlink:href" ].indexOf( location.origin ) == -1
 								) {
 									g.paths.splice( i1, 1 );
@@ -827,7 +835,7 @@ AmCharts.addInitHandler( function( chart ) {
 
 			for ( row in cfg.data ) {
 				var buffer = [];
-				if ( !isNaN(row) ) {
+				if ( !isNaN( row ) ) {
 					for ( col in cfg.data[ row ] ) {
 						var value = cfg.data[ row ][ col ];
 
@@ -946,15 +954,11 @@ AmCharts.addInitHandler( function( chart ) {
 			var cfg = _this.deepMerge( {
 				data: _this.getChartData(),
 				dateFields: [],
-				dateFormat: _this.setup.chart.dataDateFormat || "YYYY-MM-DD",
+				dateFormat: false,
 				withHeader: false
 			}, options || {}, true );
 			var data = [];
 			var cols = [];
-
-			if ( _this.setup.chart.categoryAxis && _this.setup.chart.categoryAxis.parseDates && _this.setup.chart.categoryField ) {
-				cfg.dateFields.push( _this.setup.chart.categoryField );
-			}
 
 			// HEADER
 			if ( cfg.withHeader ) {
@@ -967,7 +971,7 @@ AmCharts.addInitHandler( function( chart ) {
 			// BODY
 			for ( row in cfg.data ) {
 				var buffer = [];
-				if ( !isNaN(row) ) {
+				if ( !isNaN( row ) ) {
 					for ( col in cols ) {
 						var col = cols[ col ];
 						var value = cfg.data[ row ][ col ] || "";
@@ -1101,7 +1105,9 @@ AmCharts.addInitHandler( function( chart ) {
 		},
 
 		// MENU BUILDER
-		createMenu: function( list ) {
+		createMenu: function( list, container ) {
+			var div;
+
 			function buildList( list, container ) {
 				var i1, ul = document.createElement( "ul" );
 				for ( i1 = 0; i1 < list.length; i1++ ) {
@@ -1156,7 +1162,7 @@ AmCharts.addInitHandler( function( chart ) {
 										if ( item.action != "print" && item.format != "PRINT" ) {
 											this.download( data, item.mimeType, [ item.fileName, item.extension ].join( "." ) );
 										}
-										this.drawing.done(item.action == "print" || item.format == "PRINT");
+										this.drawing.done( item.action == "print" || item.format == "PRINT" );
 									} );
 								}
 							} )( item );
@@ -1190,7 +1196,7 @@ AmCharts.addInitHandler( function( chart ) {
 						item.click = ( function( item ) {
 							return function() {
 								this.capture( item, function() {
-									this.createMenu( item.menu, item );
+									this.createMenu( item.menu );
 								} );
 							}
 						} )( item );
@@ -1245,23 +1251,35 @@ AmCharts.addInitHandler( function( chart ) {
 				return container.appendChild( ul );
 			}
 
-			var div = _this.setup.chart.containerDiv.getElementsByClassName( "amExportButton" );
+			// DETERMINE CONTAINER
+			if ( !container ) {
+				if ( typeof _this.config.divId == "string" ) {
+					_this.config.divId = container = document.getElementById( _this.config.divId );
+				} else if ( _this.config.divId instanceof Element ) {
+					container = _this.config.divId;
+				} else {
+					container = _this.setup.chart.containerDiv;
+				}
+			}
+
+			// CREATE / RESET MENU CONTAINER
+			div = container.getElementsByClassName( "amExportButton" );
 			if ( div.length ) {
 				div = div[ 0 ];
 				div.innerHTML = "";
 			} else {
-				var div = document.createElement( "div" );
+				div = document.createElement( "div" );
 				_this.setup.menu = div;
 			}
-			div.setAttribute( "class", "amExportButton " + _this.setup.chart.classNamePrefix + "-export-menu " + _this.setup.chart.classNamePrefix + "-export-menu-" + _this.config.position );
+			div.setAttribute( "class", _this.setup.chart.classNamePrefix + "-export-menu " + _this.setup.chart.classNamePrefix + "-export-menu-" + _this.config.position + " amExportButton" );
 
 			// CALLBACK; REPLACES THE MENU WALKER
 			if ( _this.config.menuWalker ) {
 				buildList = _this.config.menuWalker;
 			}
-			buildList( list, div );
+			buildList.apply( this, [ list, div ] );
 
-			_this.setup.chart.containerDiv.appendChild( div );
+			container.appendChild( div );
 
 			return div;
 		},
@@ -1300,20 +1318,22 @@ AmCharts.addInitHandler( function( chart ) {
 			return chart;
 		},
 
-		// INITIATE
+		// INITIATE; DELAYED UNTIL CHART CONTAINER IS READY
 		init: function( chart ) {
-			_this.setup.canvas = document.createElement( "canvas" );
-			_this.setup.wrapper = document.createElement( "div" );
-			_this.setup.wrapper.setAttribute( "class", _this.setup.chart.classNamePrefix + "-export-canvas" );
-			_this.setup.wrapper.appendChild( _this.setup.canvas );
-			_this.setup.chart.containerDiv.appendChild( _this.setup.wrapper );
+			clearTimeout( _this.timer );
+			_this.timer = setInterval( function() {
+				if ( _this.setup.chart.containerDiv ) {
+					clearTimeout( _this.timer );
+					_this.setup.canvas = document.createElement( "canvas" );
+					_this.setup.wrapper = document.createElement( "div" );
+					_this.setup.wrapper.setAttribute( "class", _this.setup.chart.classNamePrefix + "-export-canvas" );
+					_this.setup.wrapper.appendChild( _this.setup.canvas );
+					_this.setup.chart.containerDiv.appendChild( _this.setup.wrapper );
 
-			_this.setup.chart.AmExport = _this;
+					_this.setup.chart.AmExport = _this;
 
-			// CREATE MENU
-			_this.timer = setTimeout( function() {
-				clearTimeout( _this.timer );
-				_this.createMenu( _this.config.menu );
+					_this.createMenu( _this.config.menu );
+				}
 			}, AmCharts.updateRate );
 		}
 	}
@@ -1351,12 +1371,7 @@ AmCharts.addInitHandler( function( chart ) {
 	// LOAD DEPENDENCIES
 	_this.loadDependencies( _this.libs.resources, _this.libs.reload );
 
-	// WAIT FOR CONTAINER
-	_this.timer = setInterval( function() {
-		if ( _this.setup.chart.containerDiv ) {
-			clearTimeout( _this.timer );
-			_this.init();
-		}
-	}, AmCharts.updateRate );
+	// INIT
+	_this.init();
 
 }, [ "pie", "serial", "xy", "funnel", "radar", "gauge", "stock", "map", "gantt" ] );

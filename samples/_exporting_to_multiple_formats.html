@@ -17,8 +17,7 @@
         <script type="text/javascript" src="../amcharts/plugins/export/export.js"></script>
         <link  type="text/css" href="../amcharts/plugins/export/export.css" rel="stylesheet">
 		<!-- <![endif]-->
-		<script type="text/javascript">
-
+		<script>
 			var chartData = [];
 
 			function generateChartData() {
@@ -45,8 +44,7 @@
 
 			var chart = AmCharts.makeChart("chartdiv", {
 				type: "stock",
-				pathToImages: "../amcharts/images/",
-
+				path: "../amcharts/",
 
 				categoryAxesSettings: {
 					minPeriod: "mm"
@@ -67,46 +65,47 @@
 
 				panels: [{
 
-					showCategoryAxis: false,
-					title: "Value",
-					percentHeight: 70,
+						showCategoryAxis: false,
+						title: "Value",
+						percentHeight: 70,
 
 
-					stockGraphs: [{
-						id: "g1",
-						valueField: "value",
-						type: "smoothedLine",
-						lineThickness: 2,
-						bullet: "round",
-						bulletBorderColor: "#FFFFFF",
-						bulletBorderAlpha: 1,
-						bulletBorderThickness: 3
-					}],
+						stockGraphs: [{
+							id: "g1",
+							valueField: "value",
+							type: "smoothedLine",
+							lineThickness: 2,
+							bullet: "round",
+							bulletBorderColor: "#FFFFFF",
+							bulletBorderAlpha: 1,
+							bulletBorderThickness: 3
+						}],
 
 
 
-					stockLegend: {
-						valueTextRegular: " ",
-						markerType: "none"
+						stockLegend: {
+							valueTextRegular: " ",
+							markerType: "none"
+						}
+					},
+
+					{
+						title: "Volume",
+						percentHeight: 30,
+
+						stockGraphs: [{
+							valueField: "volume",
+							type: "column",
+							cornerRadiusTop: 2,
+							fillAlphas: 1
+						}],
+
+						stockLegend: {
+							valueTextRegular: " ",
+							markerType: "none"
+						}
 					}
-				},
-
-				{
-					title: "Volume",
-					percentHeight: 30,
-
-					stockGraphs: [{
-						valueField: "volume",
-						type: "column",
-						cornerRadiusTop: 2,
-						fillAlphas: 1
-					}],
-
-					stockLegend: {
-						valueTextRegular: " ",
-						markerType: "none"
-					}
-				}],
+				],
 
 				chartScrollbarSettings: {
 					graph: "g1",
@@ -115,8 +114,8 @@
 
 				chartCursorSettings: {
 					valueBalloonsEnabled: true,
-					valueLineEnabled:true,
-					valueLineBalloonEnabled:true
+					valueLineEnabled: true,
+					valueLineBalloonEnabled: true
 				},
 
 				periodSelector: {

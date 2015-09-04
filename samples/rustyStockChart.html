@@ -9,7 +9,7 @@
 		<script src="../amcharts/serial.js" type="text/javascript"></script>
 		<script src="../amcharts/amstock.js" type="text/javascript"></script>
 
-		<script type="text/javascript">
+		<script>
 			var chartData1 = [];
 			AmCharts.ready(function () {
 				generateChartData();
@@ -46,7 +46,7 @@
 
 			function createStockChart() {
 				var chart = new AmCharts.AmStockChart();
-				chart.pathToImages = "../amcharts/images/";
+				chart.path = "../amcharts/";
 				chart.color = "#FFFFFF";
 				chart.fontFamily = "Amatic SC";
 				chart.fontSize = 20;
@@ -131,7 +131,7 @@
 				graph2.lineAlpha = 0;
 				graph2.fillAlphas = 0.8;
 				graph2.pattern = {
-					url: "../amcharts/patterns/white/pattern3.png",
+					url: "patterns/white/pattern3.png",
 					width: 4,
 					height: 4
 				};

@@ -9,7 +9,7 @@
 		<script src="../amcharts/serial.js" type="text/javascript"></script>
 		<script src="../amcharts/amstock.js" type="text/javascript"></script>
 
-		<script type="text/javascript">
+		<script>
 			var chartData = [];
 			generateChartData();
 
@@ -59,7 +59,7 @@
 
 			AmCharts.makeChart("chartdiv", {
 				type: "stock",
-				pathToImages: "../amcharts/images/",
+				path: "../amcharts/",
 
 				dataSets: [{
 					fieldMappings: [{
