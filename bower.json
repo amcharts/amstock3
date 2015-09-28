@@ -5,7 +5,7 @@
   ],
   "description": "JavaScript Stock Chart V3",
   "main": [
-    "js/amstock.js"
+    "amcharts/amstock.js"
   ],
   "keywords": [
     "amcharts",
