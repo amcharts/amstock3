@@ -101,6 +101,7 @@
 				// OTHER SETTINGS ////////////////////////////////////
 				var scrollbarSettings = new AmCharts.ChartScrollbarSettings();
 				scrollbarSettings.graph = graph1;
+				scrollbarSettings.updateOnReleaseOnly = false;
 				chart.chartScrollbarSettings = scrollbarSettings;
 
 				var cursorSettings = new AmCharts.ChartCursorSettings();
@@ -122,6 +123,7 @@
 				}, {
 					period: "YYYY",
 					count: 1,
+					selected:true,
 					label: "1 year"
 				}, {
 					period: "YTD",
