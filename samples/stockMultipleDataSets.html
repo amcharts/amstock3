@@ -22,10 +22,10 @@
 
 			function generateChartData() {
 				var firstDate = new Date();
-				firstDate.setDate(firstDate.getDate() - 500);
+				firstDate.setDate(firstDate.getDate() - 1500);
 				firstDate.setHours(0, 0, 0, 0);
 
-				for (var i = 0; i < 500; i++) {
+				for (var i = 0; i < 1500; i++) {
 					var newDate = new Date(firstDate);
 					newDate.setDate(newDate.getDate() + i);
 
@@ -66,9 +66,6 @@
 
 			function createStockChart() {
 				var chart = new AmCharts.AmStockChart();
-
-
-				chart.categoryAxesSettings = {maxSeries:0};
 
 				// DATASETS //////////////////////////////////////////
 				// create data sets first
