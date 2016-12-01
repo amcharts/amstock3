@@ -12,6 +12,12 @@ support staff, so your questions might take longer to respond to here.
 
 ## Installing
 
+### Using npm
+
+```
+npm install amcharts/amstock3
+```
+
 ### Using bower
 
 ```
