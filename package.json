@@ -1,6 +1,6 @@
 {
   "name": "amstock3",
-  "version": "3.21.5",
+  "version": "3.21.6",
   "description": "JavaScript Stock Chart V3",
   "main": "amcharts/amcharts.js",
   "repository": {
