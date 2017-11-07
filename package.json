@@ -1,6 +1,6 @@
 {
   "name": "amstock3",
-  "version": "3.21.6",
+  "version": "3.21.7",
   "description": "JavaScript Stock Chart V3",
   "main": "amcharts/amcharts.js",
   "repository": {
@@ -17,5 +17,5 @@
   "bugs": {
     "url": "https://github.com/amcharts/amstock3/issues"
   },
-  "homepage": "http://www.amcharts.com/"
+  "homepage": "https://www.amcharts.com/"
 }
